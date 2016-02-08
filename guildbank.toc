@@ -1,0 +1,9 @@
+## Interface: 11200
+## Title: Guild Forum Bank
+## Version: 1.0
+## Author: Roadblock
+## Notes: Use /gbank to show the addon interface. Check the locations you want to collect items from and press Start. NOTE: the Bank MUST be open for collecting bank items.
+## DefaultState: Enabled
+## LoadOnDemand: 0
+
+guildbank.xml
