@@ -1,10 +1,21 @@
-﻿GUILDBANK_LOADED_TEXT = "GuildBank Loaded. Use with /gbank or /guildbank";
-GUILDBANK_INVENTORY_TEXT = "Inventory";
-GUILDBANK_EQUIPMENT_TEXT = "Equipment";
-GUILDBANK_BANK_TEXT = "Bank";
-GUILDBANK_MONEY_TEXT = "Money";
-GUILDBANK_TITLE_TEXT = "What do you want to post to your forum?";
-GUILDBANK_STARTBUTTON_TEXT = "Start!";
-GUILDBANK_HELP_TEXT = "Now just press CTRL-C to copy data to Clipboard.";
-GUILDBANK_CLOSEBUTTON_TEXT = "Close";
-GUILDBANK_WEBLINK_TEXT = "http://db.vanillagaming.org/?item=";
+﻿local L = AceLibrary("AceLocale-2.2"):new("guildbank")
+
+L:RegisterTranslations("enUS", function() return {
+  ["%s\n|cffFFA500Click:|r Show Export|r\n|cffFFA500Right-Click:|r Options"] = true,
+  ["Bags"] = true,
+  ["Bank"] = true,
+  ["Ctrl+C to copy, Ctrl+V on Forum. Esc to close"] = true,
+  ["Disabling"] = true,
+  ["Export items to bbcode list"] = true,  
+  ["Export"] = true,
+  ["GuildBank"] = true,
+  ["Hide minimap icon"] = true,
+  ["Include Bags"] = true,
+  ["Include Bank"] = true,
+  ["Include Mail"] = true,
+  ["Include Money"] = true,
+  ["Link"] = true,
+  ["Mail"] = true,
+  ["Money"] = true,
+  ["Online Database"] = true,
+} end)
