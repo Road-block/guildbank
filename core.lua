@@ -152,15 +152,15 @@ function guildbank:make_escable(framename,operation)
   end
 end
 
-local guildbank_export = CreateFrame("FRAME","SRTIOptionsMenu",UIParent)
+local guildbank_export = CreateFrame("FRAME","guildbank_exportbase",UIParent)
 guildbank_export:SetWidth(460)
 guildbank_export:SetHeight(31)
 guildbank_export:SetPoint('TOP', UIParent, 'TOP', 0,-80)
 guildbank_export:EnableMouse(1)
 guildbank_export:SetMovable(1)
 guildbank_export:SetBackdrop({
-  bgFile = "Interface/Tooltips/UI-Tooltip-Background",
-  edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
+  bgFile = [[Interface\Tooltips\UI-Tooltip-Background]],
+  edgeFile = [[Interface\Tooltips\UI-Tooltip-Border]],
   tile = true, tileSize = 16, edgeSize = 16,
   insets = { left = 5, right = 3, top = 3, bottom = 5 }
   })
