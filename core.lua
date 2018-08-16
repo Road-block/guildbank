@@ -17,13 +17,21 @@ local links = {
   ["1"] = {label="Classic|cff5BC0DEDB|r",           prefix="https://classicdb.ch/?item=%s"},
   ["2"] = {label="|cffFFCF40T|rwin|cffFFCF40H|read",prefix="https://vanilla-twinhead.twinstar.cz/?item=%s"},
   ["3"] = {label="|cffFFA700DKPMinus|r",            prefix="https://www.dkpminus.com/vanilla-wow-database/?item=%s"},
+  ["4"] = {label="|cffE89500VanillaWoWDB|r",        prefix="https://vanillawowdb.com/?item=%s"},
+  ["5"] = {label="|cff524CEENightElfMohawk|r",      prefix="https://www.nightelfmohawk.com/?item=%s"},
+  ["6"] = {label="|cffff69b4Fokissed|r\'sVanillaDB",prefix="http://fokissed.nsupdate.info/$patch?item=%s"},
+}
+local formats = {
+  ["1"] = {label=L["BBCode"]},
+  ["2"] = {label=L["Discord"]},
 }
 local defaults = {
   Bags  = true,
   Bank  = true,
   Mail  = false,
   Money = false,
-  Link  = "1",
+  Link  = "6",
+  Format = "1",
 }
 local options = {
   type = "group",
@@ -35,7 +43,7 @@ local options = {
       type = "toggle",
       get  = "GetBagsOption",
       set  = "SetBagsOption",
-      order = 2,
+      order = 3,
     },
     Bank = {
       name = L["Bank"],
@@ -43,7 +51,7 @@ local options = {
       type = "toggle",
       get  = "GetBankOption",
       set  = "SetBankOption",
-      order = 3,
+      order = 4,
     },
     Mail = {
       name = L["Mail"],
@@ -51,7 +59,7 @@ local options = {
       type = "toggle",
       get  = "GetMailOption",
       set  = "SetMailOption",
-      order = 4,
+      order = 5,
     },
     Money = {
       name = L["Money"],
@@ -59,7 +67,7 @@ local options = {
       type = "toggle",
       get  = "GetMoneyOption",
       set  = "SetMoneyOption",
-      order = 5,
+      order = 6,
     },
     Link = {
       name = L["Link"],
@@ -68,15 +76,44 @@ local options = {
       usage = "<site>",
       get  = "GetLinkOption",
       set  = "SetLinkOption",
-      order = 6,
-      validate = {["1"] = links["1"].label, ["2"] = links["2"].label, ["3"] = links["3"].label},
+      order = 7,
+      validate = {
+      ["1"] = links["1"].label, 
+      ["2"] = links["2"].label, 
+      ["3"] = links["3"].label, 
+      ["4"] = links["4"].label,
+      ["5"] = links["5"].label,
+      ["6"] = links["6"].label,},
+    },
+    Patch = {
+      name = L["Patch"],
+      desc = L["Item Patch"],
+      type = "text",
+      usage = "<patch>",
+      get  = "GetPatchOption",
+      set  = "SetPatchOption",
+      order = 8,
+      validate = {"1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "1.10", "1.11", "1.12",},
+      hidden = function() return guildbank.db.profile.Link ~= "6" end,
+    },
+    Format = {
+      name = L["Format"],
+      desc = L["Export Format"],
+      type = "text",
+      usage = "<format>",
+      get  = "GetFormatOption",
+      set  = "SetFormatOption",
+      order = 1,
+      validate = {
+      ["1"] = formats["1"].label,
+      ["2"] = formats["2"].label,},
     },
     Export = {
       name = L["Export"],
-      desc = L["Export items to bbcode list"],
+      desc = string.format(L["Export items to %s"],formats[guildbank.db and guildbank.db.profile.Format or "1"].label),
       type = "execute",
       func = "ExportShow",
-      order = 1,
+      order = 2,
     },
   }
 }
@@ -321,9 +358,12 @@ function guildbank:itemList(location,items)
   return self[location]
 end
 
-function guildbank:Export(fmt)
+function guildbank:Export1() -- BBCode
   local timestamp = date("%b/%d %H:%M:%S")
   local linkformat = links[self.db.profile.Link].prefix
+  if self.db.profile.Link == "6" then
+    linkformat = string.gsub(linkformat,"$patch",self.db.profile.Patch.."/" or "")
+  end  
   local exportstring = "[b]" .. self._pName .. ":" .. timestamp .. "[/b]\n"
   if self.db.profile.Bags then
     exportstring = exportstring .. "[b]" .. L["Bags"] .. "[/b]\n"
@@ -398,6 +438,86 @@ function guildbank:Export(fmt)
   return exportstring
 end
 
+local gold_short, silver_short, copper_short = string.sub(GOLD,1,1), string.sub(SILVER,1,1), string.sub(COPPER,1,1)
+function guildbank:Export2() -- Discord
+  local timestamp = date("%b/%d %H:%M:%S")
+  local linkformat = links[self.db.profile.Link].prefix
+  if self.db.profile.Link == "6" then
+    linkformat = string.gsub(linkformat,"$patch",self.db.profile.Patch.."/" or "")
+  end  
+  local exportstring = "**" .. self._pName .. ":" .. timestamp .. "**\n"
+  if self.db.profile.Bags then
+    local numitems = table.getn(self.Bags)
+    if numitems > 0 then
+      exportstring = exportstring .. "*" .. L["Bags"] .. "*\n"
+    end
+    for i,iteminfo in ipairs(self.Bags) do
+      local itemName, itemString, itemColor, _, _, itemCount = iteminfo[1], iteminfo[2], iteminfo[3], iteminfo[4], iteminfo[5], iteminfo[6]
+      local itemID = self:itemid(itemString)
+      local link = string.format(linkformat,itemID)
+      exportstring = exportstring .. string.format("- %dx%s(%s) ",itemCount,itemName,link) .. "\n"
+    end
+  end
+  if self.db.profile.Bank then
+    local numitems = table.getn(self.Bank)
+    if numitems > 0 then
+      exportstring = exportstring .. "*" .. L["Bank"] .. "*\n"
+    end
+    for i,iteminfo in ipairs(self.Bank) do
+      local itemName, itemString, itemColor, _, _, itemCount = iteminfo[1], iteminfo[2], iteminfo[3], iteminfo[4], iteminfo[5], iteminfo[6]
+      local itemID = self:itemid(itemString)
+      local link = string.format(linkformat,itemID)
+      exportstring = exportstring .. string.format("- %dx%s(%s) ",itemCount,itemName,link) .. "\n"
+    end
+  end
+  if self.db.profile.Mail then
+    local numitems = table.getn(self.Mail)
+    if numitems > 0 then
+      exportstring = exportstring .. "*" .. L["Mail"] .. "*\n"
+    end
+    for i,iteminfo in ipairs(self.Mail) do
+      local itemName, itemString, itemColor, _, _, itemCount = iteminfo[1], iteminfo[2], iteminfo[3], iteminfo[4], iteminfo[5], iteminfo[6]
+      if itemName ~= MONEY then
+        local itemID = self:itemid(itemString)
+        local link = string.format(linkformat,itemID)
+        exportstring = exportstring .. string.format("- %dx%s(%s) ",itemCount,itemName,link) .. "\n"
+      end
+    end
+  end
+  if self.db.profile.Money then
+    local g,s,c = self:money()
+    exportstring = exportstring .. "*" .. L["Money"] .. "*\n"
+    local goldstr = g > 0 and string.format("%d%s ",g,gold_short) or ""
+    local silverstr = s > 0 and string.format("%d%s ",s,silver_short) or ""
+    local copperstr = c > 0 and string.format("%d%s ",c,copper_short) or ""
+    local moneystring = string.format("%s%s%s",goldstr,silverstr,copperstr)
+    local mailmoneystring = ""
+    for i,iteminfo in ipairs(self.Mail) do
+      local itemName, itemString, itemColor, _, _, itemCount = iteminfo[1], iteminfo[2], iteminfo[3], iteminfo[4], iteminfo[5], iteminfo[6]
+      if itemName == MONEY then
+        local mg,ms,mc = self:money(itemCount)
+        local goldstr = mg > 0 and string.format("%d%s ",mg,gold_short) or ""
+        local silverstr = ms > 0 and string.format("%d%s ",ms,silver_short) or ""
+        local copperstr = mc > 0 and string.format("%d%s ",mc,copper_short) or ""
+        mailmoneystring = string.format("%s%s%s",goldstr,silverstr,copperstr)
+        mailmoneystring = string.format("+ %s (%s)",mailmoneystring, L["Mail"])
+        break
+      end
+    end
+    exportstring = exportstring .. string.format("%s%s",moneystring,mailmoneystring)
+  end
+  local len = string.len(exportstring)
+  if len > 2000 then
+    self:Print(L["|cffffbf00Warning|r > Export exceeds the Discord limit of 2000 characters."])
+  end
+  return exportstring
+end
+
+function guildbank:Export()
+  local fmt = self.db.profile.Format
+  return self["Export"..fmt](self)
+end
+
 function guildbank:ExportShow()
   guildbank_export.AddSelectText(self:Export())
   ShowUIPanel(guildbank_export)
@@ -437,7 +557,16 @@ function guildbank:OnInitialize() -- ADDON_LOADED (1)
   if not FuBar then
     self.OnMenuRequest.args.hide.guiName = L["Hide minimap icon"]
     self.OnMenuRequest.args.hide.desc = L["Hide minimap icon"]
-  end  
+  end
+  -- 2.1 upgrade
+  if self.db.profile.Format == nil then
+    self.db.profile.Format = "1"
+  end
+  if self.db.profile.Patch == nil then
+    self.db.profile.Patch = "1.12"
+  end
+  options.args.Export.desc = string.format(L["Export items to %s"],formats[self.db.profile.Format].label)
+  -- 
 end
 
 function guildbank:OnEnable() -- PLAYER_LOGIN (2)
@@ -620,4 +749,17 @@ function guildbank:GetLinkOption()
 end
 function guildbank:SetLinkOption(newValue)
   self.db.profile.Link = newValue
+end
+function guildbank:GetPatchOption()
+  return self.db.profile.Patch
+end
+function guildbank:SetPatchOption(newValue)
+  self.db.profile.Patch = newValue
+end
+function guildbank:GetFormatOption()
+  return self.db.profile.Format
+end
+function guildbank:SetFormatOption(newValue)
+  self.db.profile.Format = newValue
+  options.args.Export.desc = string.format(L["Export items to %s"],formats[newValue].label)
 end

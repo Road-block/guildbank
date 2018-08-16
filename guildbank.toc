@@ -1,6 +1,6 @@
 ## Interface: 11200
 ## Title: Guild Forum Bank
-## Version: 2.01
+## Version: 2.10
 ## Author: Roadblock
 ## Notes: Use /gbank for options.
 ## X-Category: Inventory
